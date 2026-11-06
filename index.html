@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Topic 2.1: Envelope Generators (ADSR & Real Instruments)</title>
+  <style>
+    :root {
+      --coursera-blue: #0056D2;
+      --coursera-blue-focus: #00419E;
+      --text-dark: #1F1F1F;
+      --bg-light: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --border-color: #D1D5DB;
+      --focus-outline: #FFB800;
+      --highlight-bg: #EBF3FF;
+      --curve-color: #0056D2;
+      --grid-line: #E5E7EB;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+    }
+
+    .interactive-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      max-width: 760px;
+      width: 100%;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      color: var(--text-dark);
+    }
+
+    p.lead-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    /* Instrument Selector Grid */
+    .selector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .btn-select {
+      background-color: #F3F4F6;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-dark);
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-select:focus {
+      outline: 3px solid var(--focus-outline);
+      outline-offset: 2px;
+    }
+
+    .btn-select[aria-pressed="true"] {
+      background-color: var(--highlight-bg);
+      border-color: var(--coursera-blue);
+      color: var(--coursera-blue);
+    }
+
+    /* Envelope Curve Display */
+    .display-wrapper {
+      background-color: #F9FAFB;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .axis-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4B5563;
+      margin-bottom: 8px;
+    }
+
+    .curve-svg {
+      width: 100%;
+      height: 160px;
+      display: block;
+    }
+
+    /* Settings Breakdown Row */
+    .settings-table-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 10px;
+    }
+
+    .setting-item {
+      text-align: center;
+    }
+
+    .setting-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #6B7280;
+      text-transform: uppercase;
+    }
+
+    .setting-val {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--coursera-blue);
+    }
+
+    /* Audio Trigger */
+    .audio-action-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn-audio {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      background-color: var(--coursera-blue);
+      border: 2px solid var(--coursera-blue-focus);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-audio:focus {
+      outline: 3px solid var(--focus-outline);
+      outline-offset: 2px;
+    }
+
+    .audio-hint {
+      font-size: 0.85rem;
+      color: #4B5563;
+    }
+
+    /* Info Panel */
+    .info-card {
+      background-color: var(--highlight-bg);
+      border-left: 4px solid var(--coursera-blue);
+      padding: 16px;
+      border-radius: 0 6px 6px 0;
+      line-height: 1.5;
+    }
+
+    .info-card h3 {
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      color: var(--text-dark);
+    }
+
+    .info-card p {
+      margin: 0;
+      font-size: 0.92rem;
+    }
+
+    .info-card .analogy-text {
+      margin-top: 8px;
+      font-size: 0.88rem;
+      color: #374151;
+    }
+
+    .footer-reminder {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #4B5563;
+      border-top: 1px solid var(--border-color);
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="interactive-card" role="region" aria-labelledby="envelope-title">
+    <h2 id="envelope-title">Topic 2.1: Envelope Generators — How a Note Changes Over Time</h2>
+    <p class="lead-text">
+      An envelope gives a synth note the shape of a real instrument. Select an instrument to inspect its envelope curve (Figures 3–10) and audition how its loudness evolves across Attack, Decay, Sustain, and Release.
+    </p>
+
+    <!-- Instrument Selection Grid -->
+    <div class="selector-grid" role="group" aria-label="Envelope Profile Selection">
+      <button class="btn-select" id="btn-generic" aria-pressed="true" aria-controls="status-panel">Generic ADSR</button>
+      <button class="btn-select" id="btn-piano" aria-pressed="false" aria-controls="status-panel">Piano</button>
+      <button class="btn-select" id="btn-guitar" aria-pressed="false" aria-controls="status-panel">Plucked guitar</button>
+      <button class="btn-select" id="btn-bowed" aria-pressed="false" aria-controls="status-panel">Bowed strings</button>
+      <button class="btn-select" id="btn-flute" aria-pressed="false" aria-controls="status-panel">Flute / Sax</button>
+      <button class="btn-select" id="btn-organ" aria-pressed="false" aria-controls="status-panel">Organ</button>
+      <button class="btn-select" id="btn-snare" aria-pressed="false" aria-controls="status-panel">Snare / Tom</button>
+      <button class="btn-select" id="btn-cymbal" aria-pressed="false" aria-controls="status-panel">Cymbal</button>
+    </div>
+
+    <!-- Visual Curve Graphic -->
+    <div class="display-wrapper" aria-hidden="true">
+      <div class="axis-legend">
+        <span>▲ Loudness (up the side)</span>
+        <span>Time (across the bottom) ►</span>
+      </div>
+
+      <svg class="curve-svg" viewBox="0 0 600 160" preserveAspectRatio="none">
+        <!-- Grid Guidelines -->
+        <line x1="0" y1="20" x2="600" y2="20" stroke="var(--grid-line)" stroke-width="1" stroke-dasharray="4" />
+        <line x1="0" y1="80" x2="600" y2="80" stroke="var(--grid-line)" stroke-width="1" stroke-dasharray="4" />
+        <line x1="0" y1="140" x2="600" y2="140" stroke="#9CA3AF" stroke-width="1.5" />
+        
+        <!-- Key Down / Key Up Reference Markers -->
+        <line x1="380" y1="10" x2="380" y2="140" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="2" />
+        <text x="382" y="30" font-size="10" fill="#6B7280">Key Up</text>
+
+        <!-- Dynamic Envelope Path -->
+        <path id="svg-envelope-path" d="M 0 140 L 40 20 L 120 70 L 380 70 L 480 140" 
+              fill="none" stroke="var(--curve-color)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+
+      <!-- Settings Breakdown -->
+      <div class="settings-table-row">
+        <div class="setting-item">
+          <span class="setting-label">Attack</span>
+          <span class="setting-val" id="val-attack">Fast (full level)</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">Decay</span>
+          <span class="setting-val" id="val-decay">Falls to 60%</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">Sustain</span>
+          <span class="setting-val" id="val-sustain">Holds level (60%)</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">Release</span>
+          <span class="setting-val" id="val-release">Falls to silence</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audition Trigger -->
+    <div class="audio-action-row">
+      <button id="btn-play" class="btn-audio" aria-label="Play note through the selected ADSR envelope">
+        ▶ Play Note (Hold & Release)
+      </button>
+      <span class="audio-hint" id="audio-hint">Simulates pressing key, holding, and letting go.</span>
+    </div>
+
+    <!-- Screen Reader Accessible Live Status -->
+    <div id="status-panel" class="info-card" role="status" aria-live="polite">
+      <h3 id="panel-figure">Figure 3: Generic ADSR envelope</h3>
+      <p id="panel-desc">
+        Loudness rises to full at Attack, falls to about 60 percent at Decay, holds during Sustain while the key is down, then falls to silence during Release.
+      </p>
+      <div class="analogy-text" id="panel-analogy">
+        <strong>Analogy: a hand clap.</strong> A clap is sharp at the start, drops quickly, and fades away. An envelope is the shape of that clap, applied to each note.
+      </div>
+    </div>
+
+    <div class="footer-reminder">
+      <strong>Key question to ask:</strong> Does the sound keep going while you hold the key? If yes, set <strong>Sustain high</strong>. If the sound fades by itself, set <strong>Sustain low</strong> and use <strong>Decay</strong> to control the fade.
+    </div>
+  </main>
+
+  <script>
+    // Strict text descriptions and summary settings from Topic 2.1
+    const envelopeData = {
+      generic: {
+        figure: "Figure 3: Generic ADSR envelope",
+        desc: "Loudness rises to full at Attack, falls to about 60 percent at Decay, holds during Sustain while the key is down, then falls to silence during Release.",
+        analogy: "<strong>Analogy: a hand clap.</strong> A clap is sharp at the start, drops quickly, and fades away. An envelope is the shape of that clap, applied to each note.",
+        attack: "Rises to full",
+        decay: "Falls to ~60%",
+        sustain: "Holds while held",
+        release: "Falls to silence",
+        svgPath: "M 0 140 L 40 20 L 120 68 L 380 68 L 480 140",
+        audio: { a: 0.08, d: 0.2, s: 0.6, r: 0.4, type: 'sawtooth', baseFreq: 220 }
+      },
+      piano: {
+        figure: "Figure 4: Piano envelope",
+        desc: "Loudness jumps to full at once, then falls steadily. If you keep the key held for a few seconds, the note has almost died away, so Sustain is almost zero. Release is short.",
+        analogy: "A hammer hits the string once, then the string fades on its own, even while the key is held. A piano has almost no sustain.",
+        attack: "Instant",
+        decay: "Steady fall",
+        sustain: "Almost none",
+        release: "Short",
+        svgPath: "M 0 140 L 2 20 L 375 130 L 380 130 L 410 140",
+        audio: { a: 0.005, d: 1.4, s: 0.05, r: 0.15, type: 'triangle', baseFreq: 261.63 }
+      },
+      guitar: {
+        figure: "Figure 5: Plucked guitar envelope",
+        desc: "Loudness jumps to full at the pluck and falls quickly. Sustain is low, so the string is quieter while the key is held. Release is medium, so the ring tails off gradually.",
+        analogy: "<strong>Analogy: a bell with a light tap.</strong> The strike is loudest at the start, then the sound settles into a slow fade.",
+        attack: "Instant",
+        decay: "Quick fall",
+        sustain: "Low",
+        release: "Medium",
+        svgPath: "M 0 140 L 2 20 L 90 95 L 380 115 L 470 140",
+        audio: { a: 0.005, d: 0.35, s: 0.2, r: 0.5, type: 'sawtooth', baseFreq: 196.0 }
+      },
+      bowed: {
+        figure: "Figure 6: Bowed string envelope",
+        desc: "Loudness rises slowly as the bow gathers speed. It stays high while the bow moves, which is Sustain. When the bow lifts, Release is short.",
+        analogy: "<strong>Analogy: a car on a highway.</strong> You ease the pedal down slowly, the car holds a steady speed while you keep it there, and you brake hard to stop.",
+        attack: "Slow swell",
+        decay: "Short",
+        sustain: "High",
+        release: "Short",
+        svgPath: "M 0 140 L 140 20 L 170 35 L 380 35 L 410 140",
+        audio: { a: 0.6, d: 0.15, s: 0.85, r: 0.12, type: 'sawtooth', baseFreq: 220.0 }
+      },
+      flute: {
+        figure: "Figure 7: Flute or saxophone envelope",
+        desc: "Loudness builds as breath is pushed in, holds steady while the player keeps blowing, and stops quickly when the breath ends.",
+        analogy: "<strong>Analogy: a garden hose on a dial.</strong> Turn it on and the flow builds, holds steady, then stops when you shut it off.",
+        attack: "Short to medium",
+        decay: "Short",
+        sustain: "High",
+        release: "Short",
+        svgPath: "M 0 140 L 80 20 L 110 32 L 380 32 L 410 140",
+        audio: { a: 0.25, d: 0.1, s: 0.9, r: 0.1, type: 'sine', baseFreq: 329.63 }
+      },
+      organ: {
+        figure: "Figure 8: Organ envelope",
+        desc: "Loudness jumps to full immediately and stays there while the key is held. There is no real Decay. Release is instant.",
+        analogy: "<strong>Analogy: a light switch.</strong> It is fully on while held and fully off the moment it is released.",
+        attack: "Instant",
+        decay: "None",
+        sustain: "Full",
+        release: "Instant",
+        svgPath: "M 0 140 L 2 20 L 380 20 L 382 140",
+        audio: { a: 0.005, d: 0.01, s: 1.0, r: 0.01, type: 'square', baseFreq: 261.63 }
+      },
+      snare: {
+        figure: "Figure 9: Snare or tom drum envelope",
+        desc: "Loudness jumps to full at the hit and falls to silence in a fraction of a second. Holding the key does nothing.",
+        analogy: "<strong>Analogy: a clap in an empty room.</strong> A sharp crack, then silence almost at once.",
+        attack: "Instant",
+        decay: "Very fast",
+        sustain: "None",
+        release: "None",
+        svgPath: "M 0 140 L 2 20 L 70 140 L 600 140",
+        audio: { a: 0.002, d: 0.15, s: 0.0, r: 0.01, isNoise: true }
+      },
+      cymbal: {
+        figure: "Figure 10: Cymbal envelope",
+        desc: "Loudness jumps to full at the crash, then falls slowly over several seconds. Holding the key does not sustain it, so Sustain is low and the long fade continues.",
+        analogy: "<strong>Analogy: a gong that keeps humming.</strong> The sound spreads out and drifts away slowly.",
+        attack: "Instant",
+        decay: "Long",
+        sustain: "Low",
+        release: "Long",
+        svgPath: "M 0 140 L 2 20 L 380 90 L 590 140",
+        audio: { a: 0.005, d: 2.2, s: 0.1, r: 1.8, isCymbal: true }
+      }
+    };
+
+    let activeKey = 'generic';
+    let audioCtx = null;
+
+    const buttons = {
+      generic: document.getElementById('btn-generic'),
+      piano: document.getElementById('btn-piano'),
+      guitar: document.getElementById('btn-guitar'),
+      bowed: document.getElementById('btn-bowed'),
+      flute: document.getElementById('btn-flute'),
+      organ: document.getElementById('btn-organ'),
+      snare: document.getElementById('btn-snare'),
+      cymbal: document.getElementById('btn-cymbal')
+    };
+
+    const panelFigure = document.getElementById('panel-figure');
+    const panelDesc = document.getElementById('panel-desc');
+    const panelAnalogy = document.getElementById('panel-analogy');
+    const svgPath = document.getElementById('svg-envelope-path');
+    const valAttack = document.getElementById('val-attack');
+    const valDecay = document.getElementById('val-decay');
+    const valSustain = document.getElementById('val-sustain');
+    const valRelease = document.getElementById('val-release');
+    const btnPlay = document.getElementById('btn-play');
+
+    function selectEnvelope(key) {
+      activeKey = key;
+      Object.keys(buttons).forEach(k => {
+        buttons[k].setAttribute('aria-pressed', k === key ? 'true' : 'false');
+      });
+
+      const d = envelopeData[key];
+      panelFigure.textContent = d.figure;
+      panelDesc.textContent = d.desc;
+      panelAnalogy.innerHTML = d.analogy;
+      svgPath.setAttribute('d', d.svgPath);
+      valAttack.textContent = d.attack;
+      valDecay.textContent = d.decay;
+      valSustain.textContent = d.sustain;
+      valRelease.textContent = d.release;
+    }
+
+    Object.keys(buttons).forEach(k => {
+      buttons[k].addEventListener('click', () => selectEnvelope(k));
+    });
+
+    btnPlay.addEventListener('click', () => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const now = audioCtx.currentTime;
+      const d = envelopeData[activeKey].audio;
+      const keyHoldTime = 0.9; // Key held down duration
+
+      if (d.isNoise) {
+        // Snare synthesis: noise burst + punchy transient
+        const bufferSize = audioCtx.sampleRate * 0.2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+
+        noise.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start(now);
+        noise.stop(now + 0.16);
+      } else if (d.isCymbal) {
+        // Cymbal synthesis: metallic noise cluster + long fade
+        const bufferSize = audioCtx.sampleRate * 2.5;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * 0.5;
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(4500, now);
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start(now);
+        noise.stop(now + 2.5);
+      } else {
+        // Melodic sound: Oscillator shaped strictly by ADSR stages
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = d.type;
+        osc.frequency.setValueAtTime(d.baseFreq, now);
+
+        const peakGain = 0.3;
+        const sustainGain = peakGain * d.s;
+
+        // Attack
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(peakGain, now + d.a);
+        // Decay to Sustain
+        gain.gain.linearRampToValueAtTime(sustainGain, now + d.a + d.d);
+
+        // Key Up occurs at (now + keyHoldTime)
+        const keyUpTime = Math.max(now + d.a + d.d, now + keyHoldTime);
+        gain.gain.setValueAtTime(sustainGain, keyUpTime);
+        // Release to silence
+        gain.gain.linearRampToValueAtTime(0.0001, keyUpTime + d.r);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(keyUpTime + d.r + 0.05);
+      }
+    });
+  </script>
+</body>
+</html>
